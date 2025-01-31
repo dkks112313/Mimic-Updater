@@ -1,0 +1,22 @@
+{
+  "name": "untitled12",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "git": "node git.js",
+    "start": "electron index.js",
+    "build": "electron-builder --win portable"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "electron": "^34.0.2",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "axios": "^1.7.9",
+    "electron-progressbar": "^2.2.1",
+    "ini": "^5.0.0"
+  }
+}
