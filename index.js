@@ -87,7 +87,7 @@ function gitLatestVersion() {
 
 function zipExtract(nameArchive, excludeFile) {
     const zipArchive = new AdmZip(path.join(rootPath, nameArchive));
-    const zipEntries = zipArchive.getEntries(); // Получаем список файлов
+    const zipEntries = zipArchive.getEntries();
 
     zipEntries.forEach(entry => {
         if (entry.entryName !== excludeFile) {
@@ -97,7 +97,8 @@ function zipExtract(nameArchive, excludeFile) {
 }
 
 function zipDelete(nameArchive) {
-    fs.unlink(path.join(rootPath, nameArchive), (err) => {})
+    fs.unlink(path.join(rootPath, nameArchive), (err) => {
+    })
 }
 
 app.on('ready', function () {
@@ -109,60 +110,55 @@ app.on('ready', function () {
                 .then(url => {
                     const name = url.split('/').pop()
 
-                    if (version !== currentConfig['version']['version_id']) {
-                        let progressBar = new ProgressBar({
-                            text: 'Preparing data...',
-                            detail: 'Wait...',
-                            style: {
-                                text: {
-                                    'font-weight': 'bold',
-                                    'color': '#B11C11'
-                                },
-                                detail: {
-                                    'color': '#3F51B5'
-                                },
-                                bar: {
-                                    'background': '#FFD2CF'
-                                },
-                                value: {
-                                    'background': '#F44336'
-                                }
+                    let progressBar = new ProgressBar({
+                        text: 'Preparing data...',
+                        detail: 'Wait...',
+                        style: {
+                            text: {
+                                'font-weight': 'bold',
+                                'color': '#B11C11'
                             },
-                            browserWindow: {
-                                width: 500,
-                                backgroundColor: '#18191a'
+                            detail: {
+                                'color': '#3F51B5'
+                            },
+                            bar: {
+                                'background': '#FFD2CF'
+                            },
+                            value: {
+                                'background': '#F44336'
                             }
+                        },
+                        browserWindow: {
+                            width: 500,
+                            backgroundColor: '#18191a'
+                        }
+                    });
+
+                    progressBar
+                        .on('completed', function () {
+                            console.info(`completed...`);
+                            progressBar.detail = 'Task completed. Exiting...';
+                        })
+                        .on('aborted', function () {
+                            console.info(`aborted...`);
                         });
 
-                        progressBar
-                            .on('completed', function () {
-                                console.info(`completed...`);
-                                progressBar.detail = 'Task completed. Exiting...';
-                            })
-                            .on('aborted', function () {
-                                console.info(`aborted...`);
+                    downloadFile(url, name)
+                        .then(() => zipExtract(name.split('/').pop(), "update.exe"))
+                        .then(() => zipDelete(name.split('/').pop()))
+                        .then(() => {
+                            return new Promise((resolve) => {
+                                setTimeout(() => {
+                                    resolve();
+                                }, 10000);
                             });
-
-                        downloadFile(url, name)
-                            .then(() => zipExtract(name.split('/').pop(), "update.exe"))
-                            .then(() => zipDelete(name.split('/').pop()))
-                            .then(() => {
-                                return new Promise((resolve) => {
-                                    setTimeout(() => {
-                                        resolve();
-                                    }, 10000);
-                                });
-                            })
-                            .then(() => updateConfig({version_id: version}))
-                            .then(() => {
-                                progressBar.setCompleted();
-                            })
-                            .finally(() => exec(path.join(rootPath, 'Mimic-Launcher.exe')))
-                    }
-                    else {
-                        exec(path.join(rootPath, 'Mimic-Launcher.exe'))
-                    }
-                    app.quit()
+                        })
+                        .then(() => updateConfig({version_id: version}))
+                        .then(() => {
+                            progressBar.setCompleted();
+                        })
+                        .then(() => exec(path.join(rootPath, 'Mimic-Launcher.exe')))
+                        .finally(() => app.quit())
                 })
         })
 });
