@@ -4,19 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "download": "node download.js",
     "git": "node git.js",
     "start": "electron index.js",
-    "build": "electron-builder --win portable"
+    "build": "electron-builder --win portable",
+    "build-portable": "electron-packager . update --platform=win32 --arch=x64 --out=dist --portable"
   },
   "keywords": [],
   "devDependencies": {
     "electron": "^34.0.2",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "electron-packager": "^17.1.2"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
     "axios": "^1.7.9",
     "electron-progressbar": "^2.2.1",
+    "electron-root-path": "^1.1.0",
     "ini": "^5.0.0"
   }
 }

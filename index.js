@@ -1,4 +1,4 @@
-const {app} = require('electron')
+const {app, shell} = require('electron')
 const ProgressBar = require('electron-progressbar')
 const axios = require("axios");
 const fs = require("fs");
@@ -6,13 +6,20 @@ const ini = require('ini')
 const path = require("path");
 const exec = require('child_process').exec;
 const AdmZip = require("adm-zip")
+const os = require("os");
 
-const repository = "dkks112313/An-Pan-Launcher"
-const configPath = path.join("./config.ini");
+const rootPath = path.join(os.homedir(), 'Mimic-Launcher');
+
+if (!fs.existsSync(rootPath)) {
+    fs.mkdirSync(rootPath);
+}
+
+const repository = "dkks112313/dist-install"
+const configPath = path.join(rootPath, "version.ini");
 
 const defaultConfig = {
-    core: {
-        version_id: "alpha1.1"
+    version: {
+        version_id: "alpha-1.1-03.02.2025-11:44"
     }
 };
 let currentConfig = loadConfig();
@@ -23,9 +30,9 @@ function loadConfig() {
         const config = ini.parse(fileData);
 
         let updated = false;
-        for (const key in defaultConfig.core) {
-            if (!(key in config.core)) {
-                config.core[key] = defaultConfig.core[key];
+        for (const key in defaultConfig.version) {
+            if (!(key in config.version)) {
+                config.version[key] = defaultConfig.version[key];
                 updated = true;
             }
         }
@@ -44,7 +51,7 @@ function loadConfig() {
 function updateConfig(updatedConfig) {
     currentConfig = {
         ...currentConfig,
-        core: {...currentConfig.core, ...updatedConfig}
+        version: {...currentConfig.version, ...updatedConfig}
     };
 
     fs.writeFileSync(configPath, ini.stringify(currentConfig));
@@ -59,7 +66,7 @@ async function downloadFile(url, downloadPath) {
             responseType: 'stream'
         });
 
-        const writer = fs.createWriteStream(downloadPath);
+        const writer = fs.createWriteStream(path.join(rootPath, downloadPath));
 
         response.data.pipe(writer);
 
@@ -78,13 +85,19 @@ function gitLatestVersion() {
         .then(data => data['name'])
 }
 
-function zipExtract(nameArchive) {
-    const zipArchive = new AdmZip(nameArchive)
-    zipArchive.extractAllTo(path.resolve('./'), true)
+function zipExtract(nameArchive, excludeFile) {
+    const zipArchive = new AdmZip(path.join(rootPath, nameArchive));
+    const zipEntries = zipArchive.getEntries(); // Получаем список файлов
+
+    zipEntries.forEach(entry => {
+        if (entry.entryName !== excludeFile) {
+            zipArchive.extractEntryTo(entry.entryName, rootPath, true, true);
+        }
+    });
 }
 
 function zipDelete(nameArchive) {
-    fs.unlink(nameArchive, (err) => {})
+    fs.unlink(path.join(rootPath, nameArchive), (err) => {})
 }
 
 app.on('ready', function () {
@@ -96,7 +109,7 @@ app.on('ready', function () {
                 .then(url => {
                     const name = url.split('/').pop()
 
-                    if (version !== currentConfig['core']['version_id']) {
+                    if (version !== currentConfig['version']['version_id']) {
                         let progressBar = new ProgressBar({
                             text: 'Preparing data...',
                             detail: 'Wait...',
@@ -131,15 +144,24 @@ app.on('ready', function () {
                             });
 
                         downloadFile(url, name)
+                            .then(() => zipExtract(name.split('/').pop(), "update.exe"))
+                            .then(() => zipDelete(name.split('/').pop()))
+                            .then(() => {
+                                return new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        resolve();
+                                    }, 10000);
+                                });
+                            })
+                            .then(() => updateConfig({version_id: version}))
                             .then(() => {
                                 progressBar.setCompleted();
                             })
-                            .then(() => zipExtract(name))
-                            .then(() => zipDelete(name))
-                            .then(() => updateConfig({version_id: version}))
+                            .finally(() => exec(path.join(rootPath, 'Mimic-Launcher.exe')))
                     }
-
-                    //exec('"win.exe"')
+                    else {
+                        exec(path.join(rootPath, 'Mimic-Launcher.exe'))
+                    }
                     app.quit()
                 })
         })
