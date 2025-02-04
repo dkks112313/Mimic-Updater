@@ -116,16 +116,16 @@ app.on('ready', function () {
                         style: {
                             text: {
                                 'font-weight': 'bold',
-                                'color': '#B11C11'
+                                'color': '#ffffff'
                             },
                             detail: {
-                                'color': '#3F51B5'
+                                'color': '#ffffff'
                             },
                             bar: {
-                                'background': '#FFD2CF'
+                                'background': '#4caf50'
                             },
                             value: {
-                                'background': '#F44336'
+                                'background': '#23631e'
                             }
                         },
                         browserWindow: {
